@@ -1,0 +1,40 @@
+# Node.js dependencies
+**/node_modules/
+
+# Environment variables
+*.env
+backend/.env
+frontend/.env
+
+# Build output
+frontend/build/
+frontend/dist/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Coverage
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/editor directories
+.vscode/
+.idea/
+
+# Docker overrides and local files
+docker-compose.override.yml
+*.local
+
+# Docker volumes (if present in project)
+pg_data/
+mongo_data/
+
+# SQLite databases (for testing)
+*.sqlite
