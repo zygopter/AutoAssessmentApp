@@ -10,6 +10,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const formulaireRoutes = require('./routes/formsRoutes');
 
 dotenv.config();
+console.log('⚙️  server.js loaded, NODE_ENV =', process.env.NODE_ENV);
 
 const app = express();
 app.use(express.json());
@@ -26,10 +27,6 @@ app.use(cors(corsOptions));
 
 const sequelize = require('./utils/sequelize');
 
-sequelize.authenticate()
-.then(() => console.log('✅ Connected to Postgres'))
-.catch(err => console.error('❌ Unable to connect to Postgres', err));
-
 require('./models/User');
 require('./models/Class');
 require('./models/Category');
@@ -37,15 +34,33 @@ require('./models/Competence');
 require('./models/Formulaire');
 require('./models/Student');
 
-sequelize.sync({ alter: true })
-  .then(() => console.log('✅ All models were synchronized.'))
-  .catch(err => console.error('❌ Sync error', err));
-
 app.use('/api/auth', authRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/competences', competenceRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/formulaires', formulaireRoutes);
 
+if (process.env.NODE_ENV !== 'test') {
+  console.log('🌀 About to authenticate/sync DB');
+  sequelize
+    .authenticate()
+    .then(() => console.log('✅ Connected to Postgres'))
+    .catch(err => console.error('❌ Unable to connect to Postgres', err));
+
+  sequelize
+    .sync({ alter: true })
+    .then(() => console.log('✅ All models were synchronized.'))
+    .catch(err => console.error('❌ Sync error', err));
+} else {
+  console.log('🔬 Skipping DB sync/authenticate in test mode');
+}
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+if (process.env.NODE_ENV !== 'test') {
+  console.log('🚀 Starting HTTP server on port', PORT);
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+} else {
+  console.log('🔬 Test mode: not starting HTTP server');
+}
+
+module.exports = app;

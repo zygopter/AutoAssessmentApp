@@ -9,7 +9,13 @@ const Formulaire = sequelize.define('Formulaire', {
     autoIncrement: true
   },
   title:       { type: DataTypes.STRING,  allowNull: false,  trim: true },
-  competences: { type: DataTypes.ARRAY(DataTypes.INTEGER), defaultValue: [] },
+  competences: {
+    type: sequelize.getDialect() === 'postgres'
+      ? DataTypes.JSONB
+      : DataTypes.JSON,       // For SQLite
+    allowNull: false,
+    defaultValue: []
+  },
   createdBy:   { type: DataTypes.INTEGER, allowNull: false }
 }, {
   tableName: 'formulaires',
