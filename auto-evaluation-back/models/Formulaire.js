@@ -1,4 +1,4 @@
-const { DataTypes } = require('sequelize');
+const { DataTypes, Sequelize } = require('sequelize');
 const sequelize = require('../utils/sequelize');
 const User      = require('./User');
 
@@ -14,7 +14,7 @@ const Formulaire = sequelize.define('Formulaire', {
       ? DataTypes.JSONB
       : DataTypes.JSON,       // For SQLite
     allowNull: false,
-    defaultValue: []
+    defaultValue: Sequelize.literal(`'[]'::jsonb`)
   },
   createdBy:   { type: DataTypes.INTEGER, allowNull: false }
 }, {
