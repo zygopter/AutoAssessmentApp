@@ -24,7 +24,7 @@ const ClassDetail = () => {
   const [newStudent, setNewStudent] = useState({ firstName: '', lastName: '' });
 
   const fetchClassData = async () => {
-    const classData = classes.find(c => c._id === classId);
+    const classData = classes.find(c => c.id === classId);
     if (classData) {
       setClassDetails(classData);
       try {
@@ -168,12 +168,12 @@ const ClassDetail = () => {
               </TableHeader>
               <TableBody>
                 {students.map(student => (
-                  <TableRow key={student._id}>
+                  <TableRow key={student.id}>
                     <TableCell>{student.lastName}</TableCell>
                     <TableCell>{student.firstName}</TableCell>
                     {categories.map(category =>
                       category.competences.map(comp => (
-                        <TableCell key={comp._id} className="border px-4 py-2 text-center">
+                        <TableCell key={comp.id} className="border px-4 py-2 text-center">
                           {student.evaluations && student.evaluations[comp.id] ? student.evaluations[comp.id] : '-'}
                         </TableCell>
                       ))
@@ -195,7 +195,7 @@ const ClassDetail = () => {
             </SelectTrigger>
             <SelectContent>
               {formulaires.map(form => (
-                <SelectItem key={form._id} value={form._id.toString()}>{form.title}</SelectItem>
+                <SelectItem key={form.id} value={form.id.toString()}>{form.title}</SelectItem>
               ))}
             </SelectContent>
           </Select>

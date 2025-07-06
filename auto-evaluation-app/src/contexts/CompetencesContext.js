@@ -33,7 +33,7 @@ export const CompetencesProvider = ({ children }) => {
                 ]);
                 const categoriesWithCompetences = await Promise.all(
                     categoriesData.map(async (category) => {
-                        const competences = await fetchCompetencesByCategory(category._id);
+                        const competences = await fetchCompetencesByCategory(category.id);
                         return { ...category, competences };
                     })
                 );
@@ -64,7 +64,7 @@ export const CompetencesProvider = ({ children }) => {
     const updateCategoryById = async (id, updatedCategory) => {
         try {
             const updated = await updateCategory(id, updatedCategory);
-            setCategories(prev => prev.map(cat => cat._id === id ? { ...updated, competences: cat.competences } : cat));
+            setCategories(prev => prev.map(cat => cat.id === id ? { ...updated, competences: cat.competences } : cat));
         } catch (err) {
             setError(err.message);
             throw err;
@@ -74,7 +74,7 @@ export const CompetencesProvider = ({ children }) => {
     const deleteCategoryById = async (id) => {
         try {
             await deleteCategory(id);
-            setCategories(prev => prev.filter(cat => cat._id !== id));
+            setCategories(prev => prev.filter(cat => cat.id !== id));
         } catch (err) {
             setError(err.message);
             throw err;
@@ -82,10 +82,11 @@ export const CompetencesProvider = ({ children }) => {
     };
 
     const addCompetence = async (newCompetence) => {
+        console.log('[CompetencesContext] 👉 addCompetence payload:', newCompetence)
         try {
             const savedCompetence = await saveCompetence(newCompetence);
             setCategories(prev => prev.map(cat =>
-                cat._id === savedCompetence.category
+                cat.id === savedCompetence.category
                     ? { ...cat, competences: [...cat.competences, savedCompetence] }
                     : cat
             ));
@@ -100,7 +101,7 @@ export const CompetencesProvider = ({ children }) => {
             const updated = await updateCompetence(id, updatedCompetence);
             setCategories(prev => prev.map(cat => ({
                 ...cat,
-                competences: cat.competences.map(comp => comp._id === id ? updated : comp)
+                competences: cat.competences.map(comp => comp.id === id ? updated : comp)
             })));
         } catch (err) {
             setError(err.message);
@@ -112,8 +113,8 @@ export const CompetencesProvider = ({ children }) => {
         try {
             await deleteCompetence(id);
             setCategories(prev => prev.map(cat =>
-                cat._id === categoryId
-                    ? { ...cat, competences: cat.competences.filter(comp => comp._id !== id) }
+                cat.id === categoryId
+                    ? { ...cat, competences: cat.competences.filter(comp => comp.id !== id) }
                     : cat
             ));
         } catch (err) {
@@ -168,7 +169,7 @@ export const CompetencesProvider = ({ children }) => {
     const updateClassById = async (id, updatedClass) => {
         try {
             const updated = await updateClass(id, updatedClass);
-            setClasses(prev => prev.map(c => c._id === id ? updated : c));
+            setClasses(prev => prev.map(c => c.id === id ? updated : c));
             return updated;
         } catch (err) {
             setError(err.message);
@@ -179,7 +180,7 @@ export const CompetencesProvider = ({ children }) => {
     const deleteClassById = async (id) => {
         try {
             await deleteClass(id);
-            setClasses(prev => prev.filter(c => c._id !== id));
+            setClasses(prev => prev.filter(c => c.id !== id));
         } catch (err) {
             setError(err.message);
             throw err;
@@ -198,7 +199,7 @@ export const CompetencesProvider = ({ children }) => {
     const addStudentToClassById = async (classId, student) => {
         try {
             const updatedClass = await addStudentsToClass(classId, [student]);
-            setClasses(prev => prev.map(c => c._id === classId ? updatedClass : c));
+            setClasses(prev => prev.map(c => c.id === classId ? updatedClass : c));
             return updatedClass;
         } catch (err) {
             setError(err.message);
@@ -209,7 +210,7 @@ export const CompetencesProvider = ({ children }) => {
     const addStudentsToClassById = async (classId, students) => {
         try {
             const updatedClass = await addStudentsToClass(classId, students);
-            setClasses(prev => prev.map(c => c._id === classId ? updatedClass : c));
+            setClasses(prev => prev.map(c => c.id === classId ? updatedClass : c));
             return updatedClass;
         } catch (err) {
             setError(err.message);
@@ -230,7 +231,7 @@ export const CompetencesProvider = ({ children }) => {
         try {
             const newCode = await generateClassCode(classId);
             setClasses(prev => prev.map(c =>
-                c._id === classId ? { ...c, code: newCode } : c
+                c.id === classId ? { ...c, code: newCode } : c
             ));
             return newCode;
         } catch (err) {

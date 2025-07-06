@@ -20,6 +20,19 @@ api.interceptors.request.use((config) => {
     return Promise.reject(error);
 });
 
+// Si une réponse 401 arrive, on vide le token et on renvoie vers /login
+api.interceptors.response.use(
+    resp => resp,
+    err => {
+        if (err.response?.status === 401) {
+            console.warn('[api] Caught 401 – clearing token and redirecting');
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+        return Promise.reject(err);
+    }
+);
+
 // Fonctions d'authentification
 export const loginUser = async (credentials) => {
     try {
@@ -27,8 +40,8 @@ export const loginUser = async (credentials) => {
         console.log('API response:', response.data);
         return response.data;
     } catch (error) {
-        console.error('API login error:', error.response ? error.response.data : error.message);
-        throw error.response.data;
+        console.error('API login error:', error.response?.data ?? error.message);
+        throw error.response?.data ?? new Error(error.message);
     }
 };
 
@@ -37,7 +50,8 @@ export const registerUser = async (userData) => {
         const response = await api.post('/auth/register', userData);
         return response.data;
     } catch (error) {
-        throw error.response.data;
+        console.error('API register error:', error.response?.data ?? error.message);
+        throw error.response?.data ?? new Error(error.message);
     }
 };
 
@@ -170,6 +184,7 @@ export const fetchCompetences = async () => {
 export const saveCompetence = async (competenceData) => {
     try {
         const response = await api.post('/competences', competenceData);
+        console.log('[CompetencesContext] ✅ createCompetence response:', response)
         return response.data;
     } catch (error) {
         throw new Error('Failed to create competence');

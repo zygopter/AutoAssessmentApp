@@ -77,7 +77,7 @@ const ClassesTab = () => {
       {/* Liste des classes */}
       {localClasses && localClasses.length > 0 ? (
         localClasses.map((cls) => (
-          <Card key={cls._id} className="mb-2">
+          <Card key={cls.id} className="mb-2">
             <CardHeader>
               <CardTitle>{cls.name} - {cls.year}</CardTitle>
             </CardHeader>
@@ -85,10 +85,10 @@ const ClassesTab = () => {
               <p>Nombre d'élèves : {cls.students ? cls.students.length : 0}</p>
             </CardContent>
             <CardFooter>
-              <Button onClick={() => navigate(`/teacher/classes/${cls._id}`)} className="mr-2">
+              <Button onClick={() => navigate(`/teacher/classes/${cls.id}`)} className="mr-2">
                 Voir les détails
               </Button>
-              <Button variant="destructive" onClick={() => handleDeleteClass(cls._id)}>
+              <Button variant="destructive" onClick={() => handleDeleteClass(cls.id)}>
                 Supprimer
               </Button>
             </CardFooter>

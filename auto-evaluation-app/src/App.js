@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import LoginPage from './components/LoginPage';
-import RegisterPage from './components/RegisterPage';
-import TeacherPage from './components/TeacherPage';
-import ClassesTab from './components/ClassesTab';
-import ClassDetail from './components/ClassDetail';
-import CompetencesTab from './components/CompetencesTab';
-import StudentPage from './components/StudentPage';
-import TopBar from './components/TopBar';
-import FormsTab from './components/FormsTab';
-import FormPreview from './components/FormPreview';
-import ConfirmationPage from './components/ConfirmationPage';
+
+import LoginPage         from './components/LoginPage'
+import RegisterPage      from './components/RegisterPage'
+import TeacherPage       from './pages/TeacherPage'
+import ClassesTab        from './pages/ClassesPage'
+import ClassDetail       from './components/ClassDetail'
+import CompetencesTab    from './pages/CompetencesPage'
+import FormsTab          from './pages/FormsPage'
+import FormPreview       from './components/FormPreview'
+import StudentPage       from './components/StudentPage'
+import StudentFormFill   from './components/StudentFormFill'
+import ConfirmationPage  from './components/ConfirmationPage'
+import TopBar            from './components/TopBar'
+
 import { useAuth } from './contexts/AuthContext';
 import { AuthConsumer } from './contexts/AuthContext';
 import { CompetencesProvider } from './contexts/CompetencesContext';
-import StudentFormFill from './components/StudentFormFill';
 
 
 function App() {

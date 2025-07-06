@@ -11,6 +11,7 @@ const Competence = sequelize.define('Competence', {
   },
   name:       { type: DataTypes.STRING, allowNull: false },
   description:{ type: DataTypes.TEXT },
+  controlPoints: { type: DataTypes.JSONB, allowNull: false, defaultValue: [] },
   categoryId: { type: DataTypes.INTEGER, allowNull: false },
   createdBy:  { type: DataTypes.INTEGER, allowNull: false }
 }, {

@@ -20,13 +20,16 @@ router.get('/', authenticateToken, async (req, res) => {
 
 // POST /api/competences
 router.post('/', authenticateToken, async (req, res) => {
+  console.log('[competencesRoutes] POST /categories/:categoryId/competences payload:', req.body)
   try {
-    const { name, description, categoryId } = req.body;
+    const { name, description, categoryId, controlPoints } = req.body;
+    console.log('[competencesRoutes] creating with controlPoints:', controlPoints)
     const comp = await Competence.create({
       name,
       description,
       categoryId,
-      createdBy: req.user.id
+      createdBy: req.user.id,
+      controlPoints,
     });
     res.status(201).json(comp);
   } catch (err) {
@@ -53,7 +56,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     const { name, description, categoryId } = req.body;
     const comp = await Competence.findByPk(req.params.id);
     if (!comp) return res.status(404).json({ message: 'Competence not found' });
-    await comp.update({ name, description, categoryId });
+    await comp.update({ name, description, categoryId, controlPoints });
     res.json(comp);
   } catch (err) {
     res.status(400).json({ message: err.message });

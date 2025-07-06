@@ -39,7 +39,7 @@ const StudentDashboard = ({ studentId }) => {
     }, [studentId, getStudentPendingForms]);
 
     const handleStudentSelect = (studentId) => {
-        const student = matchingStudents.find(s => s._id === studentId);
+        const student = matchingStudents.find(s => s.id === studentId);
         setSelectedStudentId(student);
     };
 
@@ -130,7 +130,7 @@ const StudentDashboard = ({ studentId }) => {
                                 </SelectTrigger>
                                 <SelectContent className="bg-white">
                                     {matchingStudents.map(student => (
-                                        <SelectItem key={student._id} value={student._id} className="cursor-pointer hover:bg-gray-100">
+                                        <SelectItem key={student.id} value={student.id} className="cursor-pointer hover:bg-gray-100">
                                             {student.lastName} {student.firstName}
                                         </SelectItem>
                                     ))}

@@ -15,7 +15,7 @@ const FormPreview = () => {
 
   console.log('formulaire id: ', formId);
 
-  const formulaire = formulaires.find(f => f._id.toString() === formId);
+  const formulaire = formulaires.find(f => f.id.toString() === formId);
   if (!formulaire) return <div>Formulaire non trouvé</div>;
 
   const allCompetences = categories.flatMap(category => category.competences);
@@ -40,7 +40,7 @@ const FormPreview = () => {
       <h1 className="text-2xl font-bold mb-4">Prévisualisation : {formulaire.title}</h1>
       {formulaire.competences.map(compId => {
         console.log('Competence ID trouvée:', compId);
-        const competence = allCompetences.find(c => c._id === compId);
+        const competence = allCompetences.find(c => c.id === compId);
         if (!competence) {
           console.log('Compétence non trouvée pour ID:', compId);
           return null;
