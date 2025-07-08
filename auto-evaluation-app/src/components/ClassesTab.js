@@ -103,7 +103,7 @@ const ClassesTab = () => {
               <CardTitle>{cls.name} - {cls.year}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p>Nombre d'élèves : {cls.students ? cls.students.length : 0}</p>
+              <p>Nombre d'élèves : {cls.studentCount}</p>
             </CardContent>
             <CardFooter>
               <Button

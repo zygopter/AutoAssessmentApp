@@ -14,8 +14,17 @@ import toast from 'react-hot-toast';
 const ClassDetail = () => {
   const { classId } = useParams();
   const navigate = useNavigate();
-  const { categories, classes, formulaires, addStudentToClassById, generateClassCode,
-    getStudentsByClassId, sendFormToClassById, isLoading, error } = useCompetences();
+  const {
+    categories,
+    classes,
+    formulaires,
+    addStudentToClassById,
+    generateClassCode,
+    getStudentsByClassId,
+    sendFormToClassById,
+    isLoading,
+    error
+  } = useCompetences();
   const [classDetails, setClassDetails] = useState(null);
   const [students, setStudents] = useState([]);
   const [showImport, setShowImport] = useState(false);
@@ -24,15 +33,28 @@ const ClassDetail = () => {
   const [newStudent, setNewStudent] = useState({ firstName: '', lastName: '' });
 
   const fetchClassData = async () => {
-    const classData = classes.find(c => c.id === classId);
-    if (classData) {
-      setClassDetails(classData);
-      try {
-        const classStudents = await getStudentsByClassId(classId);
-        setStudents(classStudents);
-      } catch (error) {
-        console.error("Erreur lors de la récupération des données de la classe:", error);
-      }
+    console.log('[ClassDetail] 🔍 fetchClassData() for classId:', classId, 'typeof:', typeof classId);
+    console.log('[ClassDetail] 📦 classes array:', classes.map(c => ({ id: c.id, name: c.name })));
+
+    // on caste classId en nombre pour être sûr
+    const idNum = Number(classId);
+    const classData = classes.find(c => c.id === idNum);
+    console.log('[ClassDetail] 🕵️‍♂️ classData found:', classData);
+
+    if (!classData) {
+      console.warn('[ClassDetail] ⚠️ Classe non trouvée pour id:', classId);
+      setClassDetails(null);
+      return;
+    }
+
+    setClassDetails(classData);
+    try {
+      console.log('[ClassDetail] 📨 calling getStudentsByClassId with:', idNum);
+      const classStudents = await getStudentsByClassId(idNum);
+      console.log('[ClassDetail] 👥 students retrieved:', classStudents);
+      setStudents(classStudents);
+    } catch (err) {
+      console.error('[ClassDetail] ❌ Error fetching students:', err);
     }
   };
 

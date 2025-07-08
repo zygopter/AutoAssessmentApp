@@ -441,7 +441,9 @@ export const addStudentsToClass = async (classId, students) => {
 
 export const getStudentsByClass = async (classId) => {
     try {
+        console.log('[API] getStudentsByClass called with:', classId);
         const response = await api.get(`/classes/${classId}/students`);
+        console.log('[API] getStudentsByClass response:', response.status, response.data);
         return response.data;
     } catch (error) {
         console.error('Erreur lors de la récupération des étudiants de la classe:', error);

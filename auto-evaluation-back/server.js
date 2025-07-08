@@ -28,11 +28,11 @@ app.use(cors(corsOptions));
 const sequelize = require('./utils/sequelize');
 
 require('./models/User');
-require('./models/Class');
+const Class   = require('./models/Class');
+const Student = require('./models/Student');
 require('./models/Category');
 require('./models/Competence');
 require('./models/Formulaire');
-require('./models/Student');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/classes', classRoutes);
@@ -46,6 +46,9 @@ if (process.env.NODE_ENV !== 'test') {
     .authenticate()
     .then(() => console.log('✅ Connected to Postgres'))
     .catch(err => console.error('❌ Unable to connect to Postgres', err));
+
+  Class.hasMany(Student,   { foreignKey: 'classId' });
+  Student.belongsTo(Class, { foreignKey: 'classId' });
 
   sequelize
     .sync({ alter: true })
