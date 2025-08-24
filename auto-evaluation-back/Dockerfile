@@ -4,7 +4,8 @@ WORKDIR /app
 
 # Copier package.json + installer
 COPY package.json package-lock.json* ./
-RUN npm ci
+# Use npm install to tolerate missing lockfile (local repo lockfile deleted)
+RUN npm install --production
 
 # Copier le code
 COPY . .
