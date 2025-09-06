@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-auto_eval}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+     test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-auto_eval} -h localhost"]
+     interval: 5s
+     timeout: 5s
+     retries: 5
+
+  backend:
+    build: ./auto-evaluation-back
+    env_file:
+      - ./auto-evaluation-back/.env.prod
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build: ./auto-evaluation-app
+    env_file:
+      - ./auto-evaluation-app/.env.prod
+    ports:
+      - "80:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pg_data:
