@@ -14,6 +14,7 @@ import StudentPage       from './components/StudentPage'
 import StudentFormFill   from './components/StudentFormFill'
 import ConfirmationPage  from './components/ConfirmationPage'
 import TopBar            from './components/TopBar'
+import ErrorBoundary     from './components/ErrorBoundary'
 
 import { useAuth } from './contexts/AuthContext';
 import { AuthConsumer } from './contexts/AuthContext';
@@ -29,6 +30,7 @@ function App() {
         {({ isLoggedIn, user, logout }) => (
           <CompetencesProvider>
             <Toaster position="bottom-center" />
+            <ErrorBoundary>
             <div className="App flex flex-col h-screen">
               {isLoggedIn && user && (
                 <TopBar
@@ -70,6 +72,7 @@ function App() {
                 </Routes>
               </div>
             </div>
+            </ErrorBoundary>
           </CompetencesProvider>
         )}
       </AuthConsumer>

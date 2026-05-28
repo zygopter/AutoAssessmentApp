@@ -55,7 +55,7 @@ export const CompetencesProvider = ({ children }) => {
     const addCategory = async (newCategory) => {
         try {
             const savedCategory = await saveCategory(newCategory);
-            setCategories(prevCategories => [...prevCategories, savedCategory]);
+            setCategories(prev => [...prev, { ...savedCategory, competences: [] }]);
         } catch (err) {
             setError(err.message);
         }
@@ -82,11 +82,10 @@ export const CompetencesProvider = ({ children }) => {
     };
 
     const addCompetence = async (newCompetence) => {
-        console.log('[CompetencesContext] 👉 addCompetence payload:', newCompetence)
         try {
             const savedCompetence = await saveCompetence(newCompetence);
             setCategories(prev => prev.map(cat =>
-                cat.id === savedCompetence.category
+                cat.id === savedCompetence.categoryId
                     ? { ...cat, competences: [...cat.competences, savedCompetence] }
                     : cat
             ));
