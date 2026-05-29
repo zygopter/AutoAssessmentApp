@@ -23,8 +23,7 @@ const ImportStudents = ({ classId, onImportComplete }) => {
         }
 
         try {
-            const idNum = Number(classId);
-            await addStudentsToClassById(idNum, students);
+            await addStudentsToClassById(classId, students);
             toast.success(`${students.length} élèves ont été importés avec succès.`);
             setImportText('');
             onImportComplete();
