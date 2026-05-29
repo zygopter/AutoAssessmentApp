@@ -1,85 +1,206 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Label } from './ui/label';
-import { Input } from './ui/input';
-import { Button } from './ui/button';
-import { Alert, AlertDescription } from './ui/alert';
-import { useAuth } from './../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useAuth } from './../contexts/AuthContext';
+import AuthLayout, { AuthTabs, AuthField } from './AuthLayout';
+import { Icon } from './ui/Icon';
 
 const LoginPage = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const { login } = useAuth();
-    const navigate = useNavigate();
+  const [email, setEmail]                 = useState('');
+  const [password, setPassword]           = useState('');
+  const [showPw, setShowPw]               = useState(false);
+  const [remember, setRemember]           = useState(true);
+  const [error, setError]                 = useState('');
+  const [isSubmitting, setIsSubmitting]   = useState(false);
+  const { login } = useAuth();
+  const navigate  = useNavigate();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        setIsSubmitting(true);
-        try {
-            const user = await login({ email, password });
-            console.log('Login successful, user:', user);
-            toast.success('Connexion réussie !');
-            navigate(`/${user.role}`);
-        } catch (error) {
-            console.error('Erreur de connexion :', error);
-            const errorMessage = error.message || 'Échec de la connexion. Veuillez vérifier vos identifiants.';
-            setError(errorMessage);
-            toast.error(errorMessage);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setIsSubmitting(true);
+    try {
+      const user = await login({ email, password });
+      toast.success('Connexion réussie !');
+      navigate(`/${user.role}`);
+    } catch (err) {
+      const msg = err.message || 'Échec de la connexion. Vérifiez vos identifiants.';
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
-            <Card className="w-full max-w-md">
-                <CardHeader>
-                    <CardTitle className="text-2xl font-bold text-center">Connexion</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4 mb-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                placeholder="votre@email.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="password">Mot de passe</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-                        {error && (
-                            <Alert variant="destructive">
-                                <AlertDescription>{error}</AlertDescription>
-                            </Alert>
-                        )}
-                        <Button type="submit" className="w-full" disabled={isSubmitting}>
-                            {isSubmitting ? 'Connexion…' : 'Se connecter'}
-                        </Button>
-                    </form>
-                    <p>
-                        Pas encore de compte ? <Link to="/register" className="text-blue-600 hover:underline">S'inscrire</Link>
-                    </p>
-                </CardContent>
-            </Card>
+  return (
+    <AuthLayout>
+      <AuthTabs mode="login" onModeChange={(id) => id === 'register' && navigate('/register')} />
+
+      <div
+        className="mono"
+        style={{
+          fontSize: 10,
+          letterSpacing: '.15em',
+          textTransform: 'uppercase',
+          color: 'var(--muted)',
+          marginBottom: 6,
+        }}
+      >
+        Bon retour
+      </div>
+      <h2 className="serif" style={{ fontSize: 32, lineHeight: 1.15, marginBottom: 8 }}>
+        Connectez-vous.
+      </h2>
+      <p className="muted" style={{ fontSize: 14, marginBottom: 28, maxWidth: 420 }}>
+        Utilisez l'email associé à votre établissement.
+      </p>
+
+      <form className="col" style={{ gap: 16 }} onSubmit={handleSubmit}>
+        <AuthField label="Adresse email">
+          <input
+            className="field"
+            type="email"
+            autoComplete="email"
+            placeholder="vous@etablissement.fr"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </AuthField>
+
+        <AuthField
+          label="Mot de passe"
+          rightSlot={
+            <button
+              type="button"
+              style={{
+                fontSize: 11,
+                color: 'var(--accent-ink)',
+                fontFamily: 'var(--mono)',
+                letterSpacing: '.04em',
+                textTransform: 'uppercase',
+                background: 'none',
+                border: 0,
+                cursor: 'pointer',
+              }}
+            >
+              Oublié&nbsp;?
+            </button>
+          }
+        >
+          <div style={{ position: 'relative' }}>
+            <input
+              className="field"
+              type={showPw ? 'text' : 'password'}
+              autoComplete="current-password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={{ paddingRight: 40 }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw((s) => !s)}
+              aria-label={showPw ? 'Masquer' : 'Afficher'}
+              style={{
+                position: 'absolute',
+                right: 8,
+                top: 0,
+                bottom: 0,
+                width: 32,
+                display: 'grid',
+                placeItems: 'center',
+                color: 'var(--muted)',
+                background: 'none',
+                border: 0,
+                cursor: 'pointer',
+              }}
+            >
+              <Icon name="eye" size={14} />
+            </button>
+          </div>
+        </AuthField>
+
+        <label
+          className="row"
+          style={{
+            gap: 8,
+            fontSize: 13,
+            color: 'var(--ink-2)',
+            cursor: 'pointer',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={(e) => setRemember(e.target.checked)}
+            style={{ accentColor: 'var(--accent)' }}
+          />
+          Rester connecté sur cet appareil
+        </label>
+
+        {error && (
+          <div
+            role="alert"
+            style={{
+              fontSize: 13,
+              padding: '10px 12px',
+              background: 'var(--eval-d-bg)',
+              color: 'var(--eval-d)',
+              border: '1px solid var(--eval-d)',
+              borderRadius: 'var(--r-md)',
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          className="btn accent"
+          disabled={isSubmitting}
+          style={{
+            justifyContent: 'center',
+            padding: '12px 16px',
+            marginTop: 6,
+            fontSize: 14,
+            opacity: isSubmitting ? 0.7 : 1,
+          }}
+        >
+          {isSubmitting ? 'Connexion…' : 'Se connecter'}
+          {!isSubmitting && <Icon name="arrow-r" size={14} />}
+        </button>
+      </form>
+
+      <div
+        style={{
+          marginTop: 28,
+          paddingTop: 20,
+          borderTop: '1px solid var(--hairline)',
+        }}
+      >
+        <div className="row" style={{ gap: 6, fontSize: 13, color: 'var(--muted)' }}>
+          Pas encore de compte&nbsp;?
+          <button
+            type="button"
+            onClick={() => navigate('/register')}
+            style={{
+              color: 'var(--accent-ink)',
+              textDecoration: 'underline',
+              background: 'none',
+              border: 0,
+              cursor: 'pointer',
+              padding: 0,
+              font: 'inherit',
+            }}
+          >
+            Créez-en un
+          </button>
         </div>
-    );
+      </div>
+    </AuthLayout>
+  );
 };
 
 export default LoginPage;
