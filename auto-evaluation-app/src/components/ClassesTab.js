@@ -1,134 +1,177 @@
-// src/components/ClassesTab.js
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "./ui/card";
-import { Spinner } from "./ui/spinner";
-import { useCompetences } from '../contexts/CompetencesContext';
 import toast from 'react-hot-toast';
+import { useCompetences } from '../contexts/CompetencesContext';
+import { Icon } from './ui/Icon';
+import { SectionHead } from './ui/SectionHead';
 
+function currentAcademicYear() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const month = now.getMonth() + 1;
+  return month >= 8 ? `${y}-${y + 1}` : `${y - 1}-${y}`;
+}
 
-const ClassesTab = () => {
+export default function ClassesTab() {
   const navigate = useNavigate();
-  const { classes, addClass, deleteClassById, isLoading, error } = useCompetences();
-  const [newClass, setNewClass] = useState({ name: '', year: '' });
-  const [localClasses, setLocalClasses] = useState([]);
+  const { classes, addClass, deleteClassById } = useCompetences();
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState('');
 
-  useEffect(() => {
-    console.log('[ClassesTab] classes from context:', classes);
-    setLocalClasses(classes);
-  }, [classes]);
-
-  useEffect(() => {
-    console.log('[ClassesTab] localClasses updated:', localClasses);
-  }, [localClasses]);
-
-  const handleAddClass = async () => {
-    console.log('[ClassesTab] handleAddClass called with:', newClass);
-    if (!newClass.name) {
-      console.warn('[ClassesTab] newClass.name is empty, aborting');
+  async function handleCreate() {
+    if (!newName.trim()) {
+      toast.error('Le nom de la classe est requis.');
       return;
     }
-    // 1) calcul de l’année académique
-    const now = new Date();
-    const y = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const academicYear = month >= 8 ? `${y}-${y + 1}` : `${y - 1}-${y}`;
-
-    const payload = { name: newClass.name, year : academicYear };
-    console.log('[ClassesTab] 📦 payload envoyé à addClass:', payload);
-
     try {
-      const addedClass = await addClass(payload);
-      console.log('[ClassesTab] ✅ addClass response:', addedClass);
-      setLocalClasses(prev => [...prev, addedClass]);
-      setNewClass({ name: '', year: '' });
-      toast.success("Classe ajoutée avec succès");
+      const created = await addClass({ name: newName.trim(), year: currentAcademicYear() });
+      toast.success('Classe créée');
+      setCreating(false);
+      setNewName('');
+      if (created?.id) navigate(`/teacher/classes/${created.id}`);
     } catch (err) {
-      console.error('[ClassesTab] ❌ error adding class:', err);
-      toast.error(`Erreur lors de l'ajout de la classe : ${err.message}`);
+      toast.error(`Erreur : ${err.message}`);
     }
-  };
-
-  const handleDeleteClass = async (id) => {
-    try {
-      await deleteClassById(id);
-      console.log('[ClassesTab] deleteClassById succeeded for id:', id);
-      setLocalClasses(prev => prev.filter(cls => cls.id !== id));
-      toast.success("Classe supprimée avec succès");
-    } catch (err) {
-      console.error('[ClassesTab] error deleting class:', err);
-      toast.error(`Erreur lors de la suppression de la classe : ${err.message}`);
-    }
-  };
-
-  if (isLoading) {
-    console.log('[ClassesTab] isLoading = true');
-    return <Spinner />;
   }
-  if (error) {
-    console.log('[ClassesTab] error:', error);
-    return <div className="text-red-500">Erreur : {error}</div>;
+
+  async function handleDelete(cls, e) {
+    e.stopPropagation();
+    if (!window.confirm(`Supprimer la classe "${cls.name}" ?`)) return;
+    try {
+      await deleteClassById(cls.id);
+      toast.success('Classe supprimée');
+    } catch (err) {
+      toast.error(`Erreur : ${err.message}`);
+    }
   }
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">Gestion des classes</h2>
+    <div className="page">
+      <SectionHead
+        eyebrow="Mes classes"
+        title="Classes"
+        desc="Une classe regroupe vos élèves et reçoit vos formulaires d'auto-évaluation."
+        actions={
+          <button className="btn accent" onClick={() => setCreating(true)}>
+            <Icon name="plus" size={14} /> Nouvelle classe
+          </button>
+        }
+      />
 
-      {/* Formulaire d'ajout de classe */}
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>Ajouter une nouvelle classe</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Input
-            className="mb-2"
-            placeholder="Nom de la classe"
-            value={newClass.name}
-            onChange={(e) => {
-              console.log('[ClassesTab] newClass.name change:', e.target.value);
-              setNewClass({ ...newClass, name: e.target.value });
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
+        {classes.map((cls) => (
+          <div
+            key={cls.id}
+            onClick={() => navigate(`/teacher/classes/${cls.id}`)}
+            className="card"
+            style={{
+              textAlign: 'left',
+              cursor: 'pointer',
+              padding: 0,
+              overflow: 'hidden',
+              transition: 'transform .12s, border-color .12s, box-shadow .12s',
             }}
-          />
-          <Button onClick={handleAddClass}>Ajouter la classe</Button>
-        </CardContent>
-      </Card>
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--ink-2)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--hairline)'; }}
+          >
+            <div style={{ padding: 'var(--pad-card)', paddingBottom: 14 }}>
+              <div className="row spread" style={{ alignItems: 'flex-start', marginBottom: 10 }}>
+                <div className="mono" style={{
+                  fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase',
+                  color: 'var(--muted)',
+                }}>
+                  {cls.year}
+                </div>
+                <span className="tag accent">
+                  <Icon name="key" size={10} /> {cls.code}
+                </span>
+              </div>
+              <div className="serif" style={{ fontSize: 22, lineHeight: 1.15, marginBottom: 4 }}>
+                {cls.name}
+              </div>
+            </div>
 
-      {/* Liste des classes */}
-      {localClasses && localClasses.length > 0 ? (
-        localClasses.map((cls) => (
-          <Card key={cls.id} className="mb-2">
-            <CardHeader>
-              <CardTitle>{cls.name} - {cls.year}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Nombre d'élèves : {cls.studentCount}</p>
-            </CardContent>
-            <CardFooter>
-              <Button
-                onClick={() => {
-                  console.log('[ClassesTab] navigate to class detail:', cls.id);
-                  navigate(`/teacher/classes/${cls.id}`);
-                }}
-                className="mr-2"
-              >
-                Voir les détails
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => handleDeleteClass(cls.id)}
-              >
-                Supprimer
-              </Button>
-            </CardFooter>
-          </Card>
-        ))
-      ) : (
-        <p>Aucune classe n'a été créée pour le moment.</p>
+            <div className="row spread" style={{
+              padding: '12px var(--pad-card)',
+              borderTop: '1px solid var(--hairline)',
+              background: 'var(--paper-2)',
+              fontSize: 12,
+            }}>
+              <span className="row" style={{ gap: 6, color: 'var(--ink-2)' }}>
+                <Icon name="users" size={14} /> {cls.studentCount ?? 0} élèves
+              </span>
+              <span className="row" style={{ gap: 8 }}>
+                <button
+                  className="btn ghost sm"
+                  title="Supprimer"
+                  onClick={(e) => handleDelete(cls, e)}
+                >
+                  <Icon name="trash" size={12} />
+                </button>
+                <span className="row" style={{ gap: 4, color: 'var(--muted)' }}>
+                  Ouvrir <Icon name="arrow-r" size={14} />
+                </span>
+              </span>
+            </div>
+          </div>
+        ))}
+
+        <button
+          className="card"
+          onClick={() => setCreating(true)}
+          style={{
+            border: '1px dashed var(--line)',
+            background: 'transparent',
+            color: 'var(--muted)',
+            display: 'grid', placeItems: 'center',
+            minHeight: 156,
+            cursor: 'pointer',
+          }}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <Icon name="plus" size={20} stroke={1.4} />
+            <div className="mono" style={{
+              fontSize: 11, letterSpacing: '.1em', marginTop: 8,
+              textTransform: 'uppercase',
+            }}>
+              Créer une classe
+            </div>
+          </div>
+        </button>
+      </div>
+
+      {creating && (
+        <div className="modal-backdrop" onClick={() => setCreating(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="row spread" style={{ marginBottom: 12 }}>
+              <h2 className="serif" style={{ fontSize: 20 }}>Nouvelle classe</h2>
+              <button className="btn ghost sm" onClick={() => setCreating(false)}>
+                <Icon name="x" size={14} />
+              </button>
+            </div>
+            <label>
+              <span className="field-label">Nom de la classe</span>
+              <input
+                className="field"
+                placeholder="Ex. Terminale Spé Physique"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                autoFocus
+              />
+            </label>
+            <div className="muted" style={{ fontSize: 12, marginTop: 10 }}>
+              Année académique <strong>{currentAcademicYear()}</strong> assignée automatiquement.
+              Un code d'inscription unique sera généré.
+            </div>
+            <div className="row" style={{ gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
+              <button className="btn" onClick={() => setCreating(false)}>Annuler</button>
+              <button className="btn accent" onClick={handleCreate}>
+                <Icon name="plus" size={12} /> Créer la classe
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
-};
-
-export default ClassesTab;
+}

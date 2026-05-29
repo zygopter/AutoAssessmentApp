@@ -306,8 +306,16 @@ declare
   v_code text;
   v_exists boolean;
 begin
+  -- N'utilise que des built-ins (pas pgcrypto) : sur les projets Supabase
+  -- récents, pgcrypto vit dans le schéma `extensions` et n'est pas dans le
+  -- search_path par défaut des fonctions SECURITY DEFINER.
   loop
-    v_code := upper(substring(encode(gen_random_bytes(3), 'hex') for 6));
+    v_code := upper(
+      substring(
+        md5(random()::text || clock_timestamp()::text)
+        for 6
+      )
+    );
     select exists(select 1 from classes where code = v_code) into v_exists;
     exit when not v_exists;
   end loop;

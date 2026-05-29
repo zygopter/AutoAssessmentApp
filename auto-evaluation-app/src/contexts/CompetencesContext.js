@@ -7,7 +7,8 @@ import {
     getStudentsByClass, searchStudentsInClass,
     generateClassCode, getStudentsByClassCode, joinClass,
     updateStudentEvaluation,
-    sendFormToClass, getPendingFormsForStudent, submitStudentForm
+    sendFormToClass, getPendingFormsForStudent, submitStudentForm,
+    getAssignmentsForClass, getSubmissionsForClass
 } from '../services/api';
 import { useAuth } from './AuthContext';
 
@@ -346,6 +347,8 @@ export const CompetencesProvider = ({ children }) => {
             sendFormToClassById,
             getStudentPendingForms,
             submitStudentFormById,
+            getAssignmentsForClass,
+            getSubmissionsForClass,
             loadData,
             isLoading,
             error

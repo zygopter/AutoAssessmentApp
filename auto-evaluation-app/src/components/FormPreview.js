@@ -1,85 +1,91 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
-import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { Label } from "./ui/label";
-import { Button } from "./ui/button";
-import { useCompetences } from './../contexts/CompetencesContext';
-import { Spinner } from './ui/spinner';
+import { useCompetences } from '../contexts/CompetencesContext';
+import { Icon } from './ui/Icon';
+import { SectionHead } from './ui/SectionHead';
+import { EmptyState } from './ui/EmptyState';
+import { FormFillBody } from './FormFillBody';
 
-const FormPreview = () => {
+export default function FormPreview() {
   const { formId } = useParams();
   const navigate = useNavigate();
-  const { categories, formulaires, isLoading } = useCompetences();
-  const [responses, setResponses] = useState({});
+  const { formulaires, categories } = useCompetences();
 
-  console.log('formulaire id: ', formId);
+  const form = useMemo(
+    () => formulaires.find((f) => f.id === formId),
+    [formulaires, formId]
+  );
 
-  const formulaire = formulaires.find(f => f.id.toString() === formId);
-  if (!formulaire) return <div>Formulaire non trouvé</div>;
+  const allComps = useMemo(
+    () => categories.flatMap((cat) => (cat.competences ?? []).map((c) => ({ ...c, categoryId: cat.id }))),
+    [categories]
+  );
 
-  const allCompetences = categories.flatMap(category => category.competences);
+  if (!form) {
+    return (
+      <div className="page">
+        <button className="btn ghost sm" onClick={() => navigate(-1)} style={{ marginBottom: 18 }}>
+          <Icon name="arrow-l" size={12} /> Retour
+        </button>
+        <EmptyState
+          icon="form"
+          title="Formulaire introuvable"
+          desc="Il a peut-être été supprimé."
+        />
+      </div>
+    );
+  }
 
-  const handleResponseChange = (compId, value) => {
-    setResponses(prev => ({ ...prev, [compId]: value }));
-  };
+  const pickedComps = (form.competences || [])
+    .map((id) => allComps.find((c) => c.id === id))
+    .filter(Boolean);
 
-  const handleSubmit = () => {
-    // Ici, vous pourriez envoyer les réponses à un serveur dans une vraie application
-    console.log('Réponses soumises:', responses);
-    navigate('/confirmation');
-  };
+  const distinctCats = new Set(pickedComps.map((c) => c.categoryId)).size;
 
-  if (isLoading) {
-    return <Spinner />;
+  function copyLink() {
+    const url = `${window.location.origin}/formulaires/preview/${form.id}`;
+    navigator.clipboard.writeText(url).then(
+      () => {},
+      () => {},
+    );
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <Button onClick={() => navigate(-1)} className="mb-4">Retour</Button>
-      <h1 className="text-2xl font-bold mb-4">Prévisualisation : {formulaire.title}</h1>
-      {formulaire.competences.map(compId => {
-        console.log('Competence ID trouvée:', compId);
-        const competence = allCompetences.find(c => c.id === compId);
-        if (!competence) {
-          console.log('Compétence non trouvée pour ID:', compId);
-          return null;
-        }
-        return (
-          <Card key={compId} className="mb-4">
-            <CardHeader>
-              <CardTitle>{competence.name}</CardTitle>
-              <p className="mt-2 whitespace-pre-wrap">{competence.description}</p>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup
-                value={responses[compId] || ''}
-                onValueChange={(value) => handleResponseChange(compId, value)}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="A" id={`A-${compId}`} />
-                  <Label htmlFor={`A-${compId}`}>A - Maîtrisé</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="B" id={`B-${compId}`} />
-                  <Label htmlFor={`B-${compId}`}>B - Satisfaisant</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="C" id={`C-${compId}`} />
-                  <Label htmlFor={`C-${compId}`}>C - Commencé</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="D" id={`D-${compId}`} />
-                  <Label htmlFor={`D-${compId}`}>D - Insuffisant</Label>
-                </div>
-              </RadioGroup>
-            </CardContent>
-          </Card>
-        );
-      })}
-      <Button onClick={handleSubmit} className="mt-4">Envoyer les réponses</Button>
+    <div className="page">
+      <button
+        className="btn ghost sm"
+        onClick={() => navigate(-1)}
+        style={{ marginBottom: 18, padding: '4px 8px' }}
+      >
+        <Icon name="arrow-l" size={12} /> Retour
+      </button>
+
+      <div className="card" style={{
+        padding: 14, marginBottom: 24,
+        background: 'var(--accent-soft)', borderColor: 'var(--accent-line)',
+        display: 'flex', alignItems: 'center', gap: 12,
+      }}>
+        <Icon name="eye" size={16} style={{ color: 'var(--accent-ink)' }} />
+        <div style={{ flex: 1, color: 'var(--accent-ink)' }}>
+          <strong style={{ fontWeight: 500 }}>Mode aperçu — rendu côté élève.</strong>{' '}
+          Les réponses ne seront pas enregistrées.
+        </div>
+        <button className="btn sm" onClick={copyLink}>
+          <Icon name="copy" size={12} /> Copier le lien
+        </button>
+      </div>
+
+      <SectionHead
+        eyebrow="Aperçu"
+        title={form.title}
+        desc={`${pickedComps.length} compétences réparties en ${distinctCats} catégorie${distinctCats > 1 ? 's' : ''}.`}
+      />
+
+      {pickedComps.length === 0 ? (
+        <EmptyState icon="form" title="Ce formulaire ne contient aucune compétence" />
+      ) : (
+        <FormFillBody comps={pickedComps} categories={categories} />
+      )}
     </div>
   );
-};
-
-export default FormPreview;
+}

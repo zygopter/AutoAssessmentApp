@@ -12,11 +12,14 @@ const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+        setIsSubmitting(true);
         try {
             const user = await login({ email, password });
             console.log('Login successful, user:', user);
@@ -27,6 +30,8 @@ const LoginPage = () => {
             const errorMessage = error.message || 'Échec de la connexion. Veuillez vérifier vos identifiants.';
             setError(errorMessage);
             toast.error(errorMessage);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -64,8 +69,8 @@ const LoginPage = () => {
                                 <AlertDescription>{error}</AlertDescription>
                             </Alert>
                         )}
-                        <Button type="submit" className="w-full">
-                            Se connecter
+                        <Button type="submit" className="w-full" disabled={isSubmitting}>
+                            {isSubmitting ? 'Connexion…' : 'Se connecter'}
                         </Button>
                     </form>
                     <p>

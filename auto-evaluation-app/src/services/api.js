@@ -338,3 +338,44 @@ export const submitStudentForm = async (formAssignmentId, studentId, responses) 
 export const updateStudentEvaluation = async () => {
   throw new Error('Direct evaluation updates not implemented in the Supabase migration yet');
 };
+
+// =============================================================================
+// CLASS AGGREGATES — assignments + submissions for the teacher ClassDetail view
+// =============================================================================
+export const getAssignmentsForClass = async (classId) => {
+  const { data, error } = await supabase
+    .from('form_assignments')
+    .select('id, form_id, sent_at, formulaire:formulaires(id, title, competences)')
+    .eq('class_id', classId)
+    .order('sent_at', { ascending: false });
+  throwIf(error, 'Failed to fetch assignments');
+  return data.map((a) => ({
+    id: a.id,
+    formId: a.form_id,
+    sentAt: a.sent_at,
+    title: a.formulaire?.title,
+    competences: a.formulaire?.competences ?? [],
+  }));
+};
+
+export const getSubmissionsForClass = async (classId) => {
+  const { data: asgn, error: e1 } = await supabase
+    .from('form_assignments')
+    .select('id')
+    .eq('class_id', classId);
+  throwIf(e1, 'Failed to fetch assignments');
+  if (!asgn.length) return [];
+
+  const { data, error } = await supabase
+    .from('submissions')
+    .select('id, form_assignment_id, student_id, responses, submitted_at')
+    .in('form_assignment_id', asgn.map((a) => a.id));
+  throwIf(error, 'Failed to fetch submissions');
+  return data.map((s) => ({
+    id: s.id,
+    formAssignmentId: s.form_assignment_id,
+    studentId: s.student_id,
+    responses: s.responses ?? {},
+    submittedAt: s.submitted_at,
+  }));
+};

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 
 const AuthContext = createContext(null);
@@ -6,6 +6,7 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser]       = useState(null);
   const [loading, setLoading] = useState(true);
+  const authEventId = useRef(0);
 
   // Build the app user object from a Supabase session by joining the profile row.
   const hydrateUser = async (session) => {
@@ -42,9 +43,24 @@ export const AuthProvider = ({ children }) => {
       });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        const u = await hydrateUser(session);
-        if (active) setUser(u);
+      (_event, session) => {
+        const eventId = authEventId.current + 1;
+        authEventId.current = eventId;
+
+        // Supabase warns against awaiting Supabase calls directly inside
+        // onAuthStateChange. Doing the profile request synchronously from this
+        // callback can keep the auth client lock open and make subsequent login
+        // attempts appear to do nothing. Defer hydration to the next tick so the
+        // auth event can finish first.
+        setTimeout(async () => {
+          try {
+            const u = await hydrateUser(session);
+            if (active && authEventId.current === eventId) setUser(u);
+          } catch (err) {
+            console.error('[AuthContext] auth state hydration failed:', err);
+            if (active && authEventId.current === eventId) setUser(null);
+          }
+        }, 0);
       }
     );
 
@@ -58,6 +74,7 @@ export const AuthProvider = ({ children }) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
     const u = await hydrateUser(data.session);
+    if (!u) throw new Error('Connexion impossible : profil utilisateur introuvable.');
     setUser(u);
     return u;
   };
@@ -75,6 +92,7 @@ export const AuthProvider = ({ children }) => {
       throw new Error("Vérifie tes emails pour confirmer ton compte avant de te connecter.");
     }
     const u = await hydrateUser(data.session);
+    if (!u) throw new Error('Inscription impossible : profil utilisateur introuvable.');
     setUser(u);
     return u;
   };
@@ -85,7 +103,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, register }}>
+    <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );
@@ -94,7 +112,7 @@ export const AuthProvider = ({ children }) => {
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthConsumer = ({ children }) => {
-  const { user, loading, login, logout, register } = useAuth();
-  const isLoggedIn = !!user;
+  const { user, loading, isAuthenticated, login, logout, register } = useAuth();
+  const isLoggedIn = isAuthenticated;
   return children({ isLoggedIn, user, loading, login, logout, register });
 };

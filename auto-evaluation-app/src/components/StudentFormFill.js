@@ -1,119 +1,181 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useCompetences } from '../contexts/CompetencesContext';
+import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
-import { Button } from "./ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
-import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { Label } from "./ui/label";
-import { toast } from 'react-hot-toast';
+import { useCompetences } from '../contexts/CompetencesContext';
+import { Icon } from './ui/Icon';
+import { EmptyState } from './ui/EmptyState';
+import { FormFillBody } from './FormFillBody';
 
-const StudentFormFill = () => {
-    const { formId } = useParams();
-    const navigate = useNavigate();
-    const { user } = useAuth();
-    const { formulaires, categories, submitStudentFormById, getStudentPendingForms } = useCompetences();
-    const [form, setForm] = useState(null);
-    const [responses, setResponses] = useState({});
+export default function StudentFormFill() {
+  const { formId } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { categories, getStudentPendingForms, submitStudentFormById } = useCompetences();
 
-    useEffect(() => {
-        const loadForm = async () => {
-            if (!user) return;
+  const [pending, setPending] = useState(null);
+  const [answers, setAnswers] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [loadError, setLoadError] = useState(null);
 
-            try {
-                const pendingForms = await getStudentPendingForms(user.id);
-                console.log('Pending forms:', pendingForms);
-
-                // Trouver le formulaire en attente correspondant à l'ID de l'URL
-                const currentPendingForm = pendingForms.find(f => f.id.toString() === formId);
-                console.log('Current pending form:', currentPendingForm);
-
-                if (currentPendingForm) {
-                    const formDetails = formulaires.find(f => f.id === currentPendingForm.formId);
-                    console.log('Form details:', formDetails);
-
-                    if (formDetails) {
-                        setForm({
-                            ...currentPendingForm,
-                            ...formDetails
-                        });
-                    } else {
-                        console.error('Détails du formulaire non trouvés');
-                        toast.error('Erreur lors du chargement des détails du formulaire');
-                    }
-                } else {
-                    console.error('Formulaire en attente non trouvé');
-                    toast.error('Formulaire non trouvé');
-                }
-            } catch (error) {
-                console.error('Erreur lors du chargement du formulaire:', error);
-                toast.error('Erreur lors du chargement du formulaire');
-            }
-        };
-
-        loadForm();
-    }, [user, formId, formulaires, getStudentPendingForms]);
-
-    const handleSubmit = async () => {
-        if (!user || !form) return;
-
-        try {
-            await submitStudentFormById(form.id, user.id, responses);
-            toast.success("Formulaire soumis avec succès");
-            navigate('/student');
-        } catch (error) {
-            console.error('Erreur lors de la soumission du formulaire:', error);
-            toast.error("Erreur lors de la soumission du formulaire");
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      if (!user) return;
+      try {
+        const forms = await getStudentPendingForms(user.id);
+        const found = forms.find((f) => f.id === formId);
+        if (!active) return;
+        if (!found) {
+          setLoadError('Ce formulaire n\'est plus en attente ou ne vous est pas adressé.');
+        } else {
+          setPending(found);
         }
-    };
+      } catch (err) {
+        if (active) setLoadError(err.message);
+      }
+    }
+    load();
+    return () => { active = false; };
+  }, [user, formId, getStudentPendingForms]);
 
-    const handleGoBack = () => {
-        navigate('/student'); // Retour à la page d'accueil de l'étudiant
-    };
+  const allComps = useMemo(
+    () => categories.flatMap((cat) => (cat.competences ?? []).map((c) => ({ ...c, categoryId: cat.id }))),
+    [categories]
+  );
 
-    if (!form) return <div>Chargement du formulaire...</div>;
+  const pickedComps = useMemo(() => {
+    if (!pending) return [];
+    return (pending.competences || [])
+      .map((id) => allComps.find((c) => c.id === id))
+      .filter(Boolean);
+  }, [pending, allComps]);
 
-    const findCompetence = (compId) => {
-        for (let category of categories) {
-            const comp = category.competences.find(c => c.id === compId);
-            if (comp) return comp;
-        }
-        return null;
-    };
+  const filled = Object.keys(answers).filter((k) => answers[k]).length;
+  const total = pickedComps.length;
+  const pct = total ? Math.round(filled / total * 100) : 0;
+  const complete = total > 0 && filled === total;
 
+  async function handleSubmit() {
+    if (!pending) return;
+    if (!complete) {
+      toast.error('Répondez à toutes les compétences avant d\'envoyer.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await submitStudentFormById(pending.id, pending.studentId, answers);
+      toast.success('Auto-évaluation envoyée');
+      navigate('/confirmation');
+    } catch (err) {
+      toast.error(`Erreur : ${err.message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (loadError) {
     return (
-        <div className="container mx-auto p-4">
-            <Button onClick={handleGoBack} variant="outline">
-                Retour
-            </Button>
-            <h2 className="text-2xl font-bold mb-4">{form.title}</h2>
-            {form.competences.map(compId => {
-                const competence = findCompetence(compId);
-                if (!competence) return null;
-                return (
-                    <Card key={compId} className="mb-4">
-                        <CardHeader>
-                            <CardTitle>{competence.name}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <RadioGroup
-                                onValueChange={(value) => setResponses({ ...responses, [compId]: value })}
-                                value={responses[compId] || ''}
-                            >
-                                {['A', 'B', 'C', 'D'].map(value => (
-                                    <div key={value} className="flex items-center space-x-2">
-                                        <RadioGroupItem value={value} id={`${compId}-${value}`} />
-                                        <Label htmlFor={`${compId}-${value}`}>{value}</Label>
-                                    </div>
-                                ))}
-                            </RadioGroup>
-                        </CardContent>
-                    </Card>
-                );
-            })}
-            <Button onClick={handleSubmit}>Soumettre le formulaire</Button>
-        </div>
+      <div className="page" style={{ maxWidth: 880 }}>
+        <button className="btn ghost sm" onClick={() => navigate('/student')} style={{ marginBottom: 18 }}>
+          <Icon name="arrow-l" size={12} /> Retour
+        </button>
+        <EmptyState icon="form" title="Formulaire indisponible" desc={loadError} />
+      </div>
     );
-};
+  }
 
-export default StudentFormFill;
+  if (!pending) {
+    return (
+      <div className="page" style={{ maxWidth: 880 }}>
+        <div className="muted" style={{ padding: '40px 0', textAlign: 'center' }}>
+          Chargement…
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="page" style={{ maxWidth: 880 }}>
+      <button
+        className="btn ghost sm"
+        onClick={() => navigate('/student')}
+        style={{ marginBottom: 18, padding: '4px 8px' }}
+      >
+        <Icon name="arrow-l" size={12} /> Retour
+      </button>
+
+      <div style={{
+        background: 'var(--paper)',
+        borderBottom: '1px solid var(--hairline)',
+        margin: '0 -28px 28px',
+        padding: '0 28px 18px',
+        position: 'sticky', top: 0, zIndex: 5,
+      }}>
+        <div className="mono" style={{
+          fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase',
+          color: 'var(--muted)', marginBottom: 6,
+        }}>
+          Auto-évaluation
+        </div>
+        <h1 style={{ fontSize: 28, lineHeight: 1.15, marginBottom: 14 }}>{pending.title}</h1>
+        <div className="row" style={{ gap: 14, alignItems: 'center' }}>
+          <div className="progress" style={{ flex: 1 }}>
+            <div style={{ width: `${pct}%` }} />
+          </div>
+          <div className="mono" style={{
+            fontSize: 12, color: 'var(--ink-2)', minWidth: 60, textAlign: 'right',
+          }}>
+            {filled} / {total}
+          </div>
+        </div>
+      </div>
+
+      <div className="card" style={{
+        padding: '12px 16px', marginBottom: 22,
+        background: 'var(--paper-2)', borderColor: 'var(--hairline)',
+        display: 'flex', gap: 14, alignItems: 'flex-start',
+      }}>
+        <Icon name="dot" size={14} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 2 }} />
+        <div style={{ fontSize: 13, color: 'var(--ink-2)' }}>
+          Positionnez-vous honnêtement sur chaque compétence. Vos réponses servent
+          à votre professeur·e pour adapter le cours — il ne s'agit pas d'une note.
+        </div>
+      </div>
+
+      <FormFillBody
+        comps={pickedComps}
+        categories={categories}
+        answers={answers}
+        onChange={(id, v) => setAnswers((o) => ({ ...o, [id]: v }))}
+      />
+
+      <div style={{
+        marginTop: 32, padding: 20,
+        border: '1px solid ' + (complete ? 'var(--accent-line)' : 'var(--hairline)'),
+        borderRadius: 'var(--r-lg)',
+        background: complete ? 'var(--accent-soft)' : 'var(--surface)',
+        display: 'flex', alignItems: 'center', gap: 18,
+      }}>
+        <div style={{ flex: 1 }}>
+          <div className="serif" style={{ fontSize: 18, lineHeight: 1.2 }}>
+            {complete
+              ? 'Tout est rempli — vous pouvez envoyer.'
+              : `Il reste ${total - filled} compétence${total - filled > 1 ? 's' : ''} à évaluer.`}
+          </div>
+          <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+            Une fois envoyé, vous ne pourrez plus modifier vos réponses.
+          </div>
+        </div>
+        <button
+          className="btn accent"
+          disabled={!complete || submitting}
+          onClick={handleSubmit}
+          style={{ padding: '10px 18px', opacity: complete && !submitting ? 1 : 0.5 }}
+        >
+          <Icon name="send" size={14} /> {submitting ? 'Envoi…' : 'Envoyer mes réponses'}
+        </button>
+      </div>
+    </div>
+  );
+}

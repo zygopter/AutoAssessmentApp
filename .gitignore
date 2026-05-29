@@ -38,3 +38,6 @@ mongo_data/
 
 # SQLite databases (for testing)
 *.sqlite
+
+# Locally captured screenshots (generated via scripts/screenshots*.sh|mjs)
+screenshots/
