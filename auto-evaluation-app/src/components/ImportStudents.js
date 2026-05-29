@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { useCompetences } from '../contexts/CompetencesContext';

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
     fetchCategories, saveCategory, updateCategory, deleteCategory,
-    fetchCompetences, saveCompetence, updateCompetence, deleteCompetence, fetchCompetencesByCategory,
+    saveCompetence, updateCompetence, deleteCompetence, fetchCompetencesByCategory,
     fetchFormulaires, saveFormulaire, updateFormulaire, deleteFormulaire,
     fetchClasses, saveClass, updateClass, deleteClass, getClassDetails, addStudentsToClass,
     getStudentsByClass, searchStudentsInClass,
@@ -51,6 +51,7 @@ export const CompetencesProvider = ({ children }) => {
 
     useEffect(() => {
         loadData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user]);
 
     const addCategory = async (newCategory) => {

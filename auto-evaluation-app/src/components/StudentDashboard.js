@@ -5,7 +5,6 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Input } from './ui/input';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 const StudentDashboard = ({ studentId }) => {
@@ -16,7 +15,6 @@ const StudentDashboard = ({ studentId }) => {
     const { classes, getStudentPendingForms, searchStudentsInClassByCode, joinClassByCode } = useCompetences();
     const [matchingStudents, setMatchingStudents] = useState([]);
     const [selectedStudentId, setSelectedStudentId] = useState('');
-    const { user } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
